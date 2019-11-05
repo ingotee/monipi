@@ -4,14 +4,15 @@
 #
 # Version 1.0 (c) c't/Ingo Storm it@ct.de - 2019-11-05
 #
-# Purpose: log Raspberry Pi temperature and ARM frequency
-# to tdout once per second. Usually called by a test script.
+# Purpose: Log Raspberry Pi temperature and ARM frequency
+# to stdout once per second. Usually called by a test script.
 #
 # Parameters: none 
 #
 # Prerequisites:
 # - executable vcgencmd to get temp and clock from Raspberry Pi SoC
-######
+#
+###################################################
 #
 # Release notes
 #
@@ -32,15 +33,16 @@ _dbg_info() {
 }
 
 _cleanup() {
-  # cleanup when done or interrupted.
-  # nothin to do at the moment.
+  # clean up when done or interrupted.
+  # nothing to do at the moment.
   exit $?
 }	
 
 _check_prereq() {
+  _cmd_needed="vcgencmd"
   _dbg_info "in check_prereq"
-  if [ ! $(command -v vcgencmd) ]; then
-    echo "vcgencmd required but not found, aborting."
+  if [ ! $(command -v $_cmd_needed) ]; then
+    echo "$_cmd_needed required but not found, aborting."
     return 1
   else
     return 0
@@ -49,7 +51,6 @@ _check_prereq() {
      
 _start_logging() {
   _dbg_info "in _start_logging"
-  timestamp=$(date '+%s')
   printf "%-12s%5s%10s\n" "TIMESTAMP" "TEMP" "ARM_FREQ" 
 }
 
