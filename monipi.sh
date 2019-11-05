@@ -80,7 +80,7 @@ _do_log() {
     # exact timing is NOT important.
     _last=$_timestamp
     while [ $_last -eq $_timestamp ]; do	
-      sleep 0.1
+      sleep 0.25
       _timestamp=$(date '+%s')
     done
   done
