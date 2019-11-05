@@ -29,7 +29,7 @@ _info() {
 }
 
 _dbg_info() {
-  [[ "$DEBUG" -ne "" ]] && "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@"
+  [[ ! -z "$DEBUG" ]] && echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@"
 }
 
 _cleanup() {
