@@ -4,7 +4,7 @@ monipi is a collection of two bash scripts and a gnuplot script. Together they e
 
 - monipi.sh pulls temperature and ARM frequency from the Raspberry
 Pi's SoC once every second and logs them with a timestamp.
-- stress-and-log.sh stresses the Raspberry Pi in three stages
+- stress-and-log.sh stresses the Raspberry Pi in three stages:
   1. openssl speed and iperf3 simulate a server that has to deal with encrypted network traffic
   2. glmark2 stresses the GPU while only giving one ARM core something to do.
   3. cpuburn-a53 stresses many units inside the ARM cores at the same time. After 50% of the time allocated for this test, glmark2 kicks in to stress the GPU simultaneously.
