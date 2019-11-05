@@ -17,10 +17,12 @@ Prerequisites:
 1. A writable directory $HOME/monipi for the scripts, the logs and the graphs.
 2. openssl compiled with the "speed" benchmark routine and ChaCha20-Poly1305. Both is the case with the stock openssl package in Raspbian Buster.
 3. iperf3 from Raspbian Buster repoistories
-4. glmark2 compiled with x11-???. You have to pull this from GitHub and compile it yourself if you do not let install.sh do it.
-5. cpuburn-a53 from the project cpuburn-arm. You have to pull this from GitHub and compile it yourself if you do not let install.sh do it.
-6. gnuplot from the Raspbian Buster repositories.
-7. vgencmd utility included with Raspbian Buster.
+4. An iperf3-server on your local network that iperf3 can talk to. Has to be specified in the scirpt.
+5. The regular Raspbian desktop should be installed.
+6. ***TODO: specify glmark2-flavor*** glmark2 compiled with x11-???. You have to pull this from GitHub and compile it yourself if you do not let install.sh do it.
+7. cpuburn-a53 from the project cpuburn-arm. You have to pull this from GitHub and compile it yourself if you do not let install.sh do it.
+8. gnuplot from the Raspbian Buster repositories.
+9. vgencmd utility included with Raspbian Buster.
  
 install.sh can try and gather what might be missing on your Raspberry Pi.
 

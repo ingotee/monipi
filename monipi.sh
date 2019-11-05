@@ -68,7 +68,9 @@ _do_log() {
   # gather information and print a line each second 
   while true; do
     _timestamp=$(date '+%s')
-    _temp=$(vcgencmd measure_temp | egrep -o '[0-9]*\.[0-9]*')
+    _temp=$(vcgencmd measure_temp)
+    _temp=${_temp#*=}
+    _temp=${_temp%\'*}
     _arm_freq=$(vcgencmd measure_clock arm)
     _arm_freq=${_arm_freq:14:(-6)}
     _now=$(( $_timestamp - $_starttime ))
@@ -78,7 +80,7 @@ _do_log() {
     # exact timing is NOT important.
     _last=$_timestamp
     while [ $_last -eq $_timestamp ]; do	
-      sleep 0.1
+      sleep 0.25
       _timestamp=$(date '+%s')
     done
   done
