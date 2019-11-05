@@ -1,13 +1,14 @@
 #!/bin/bash
 #
-# log-and-stress.sh
+# stress-and-log.sh
 # Version 1.0 (c) c't/Ingo Storm it@ct.de
 #
 # Purpose: log Raspberry Pi temperature and ARM frequency
 # while putting it under stress. The resulting logfile can
 # be plotted with the gnuplot script cool.pl.
-# Scenario:
-# - start logging
+#
+# Sequence of actions:
+# - start logging with monipi.sh
 # - wait for $_cooldown_time seconds
 # - run openssl speed and iperf3 for $_test_time seconds
 # - wait for $_pause_time seconds
@@ -32,30 +33,24 @@
 MASTER_LOG="$HOME/monipi/monipi.master.log"  # master log file
 LOG_FILE=""                                  # log file for this test
 IPERF3_SERVER="it-mac-mini.local"
-MONIPI_CMD="$HOME/monipi/monipi.stdout.sh"
+MONIPI_CMD="$HOME/monipi/monipi.sh"
 
 # durations of different phases
+# one set for short tests
 _cooldown_time=20                            # time to wait before stress tests
 _test_time=20                                # duration of each stress test
 _pause_time=30                               # pause between stress tests
 _cooldown_multiplier=3                       # multiplier for final cooldown 
+# second set for regular tests, 28 minutes
+#_cooldown_time=60                            # time to wait before stress tests
+#_test_time=180                                # duration of each stress test
+#_pause_time=60                               # pause between stress tests
+#_cooldown_multiplier=3                       # multiplier for final cooldown 
 
-# y = Dauer eines Tests
-G_
-# z = Cooldown am Anfang
-#cooldownDauer=60
-#pausenDauer=180
-#testDauer=300
-#cooldownDauer=60
-#pausenDauer=60
-#testDauer=180
-cooldownDauer=20
-pausenDauer=20
-testDauer=30
-
-printf "%-12s%10s\n" "Cooldown" "$cooldownDauer"
-printf "%-12s%10s\n" "Pausenlänge" "$pausenDauer"
-printf "%-12s%10s\n" "Testlänge" "$testDauer"
+printf "%-12s%10s\n" "Cooldown" "$_cooldown_time"
+printf "%-12s%10s\n" "Pausenlänge" "$_pause_time"
+printf "%-12s%10s\n" "Testlänge" "$_test_time"
+printf "%-12s%10s\n" "End-Cooldown" "$(( $_test_time* $_cooldown_multiplier ))"
 
 if [ -z "$1" ]; then
         echo ""
