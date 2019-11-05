@@ -2,7 +2,7 @@
 #
 # monipi.sh
 #
-# Version 1.0 (c) c't/Ingo Storm it@ct.de - 2019-11-05
+# Version 1.1 (c) c't/Ingo Storm it@ct.de - 2019-11-06
 #
 # Purpose: Log Raspberry Pi temperature and ARM frequency
 # to stdout once per second. Usually called by a test script.
