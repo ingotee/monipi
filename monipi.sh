@@ -2,7 +2,10 @@
 #
 # monipi.sh
 #
-# Version 1.2 (c) c't/Ingo Storm it@ct.de - 2019-11-06
+# Version 1.2 (c) 2019-11-06
+# (c) c't/Ingo Storm it@ct.de - 2019-11-06
+# 
+# License: GPL V3
 #
 # Purpose: Log Raspberry Pi temperature and ARM frequency
 # to stdout once per second. Usually called by a test script.
@@ -16,7 +19,10 @@
 #
 # Release notes
 #
+# 2019.11.06-1400: 1.2 some tweaks and version bump
 # 2019.11.05-1400: 1.0 first release with new style
+
+readonly _cmd_needed="vcgencmd"        # gets temp and clock from RPi SoC
 
 trap _cleanup SIGHUP SIGINT SIGTERM
 
@@ -39,7 +45,6 @@ _cleanup() {
 }	
 
 _check_prereq() {
-  _cmd_needed="vcgencmd"
   _dbg_info "in check_prereq"
   if [ ! $(command -v $_cmd_needed) ]; then
     echo "$_cmd_needed required but not found, aborting."
@@ -77,7 +82,8 @@ _do_log() {
     printf "%-12s%5s%10s\n" "$_now" "$_temp" "$_arm_freq"
 
     # wait until next system time second has started.
-    # exact timing is NOT important.
+    # exact timing is NOT important. We just want one reading
+    # in every second, not in one-second-intervals
     _last=$_timestamp
     while [ $_last -eq $_timestamp ]; do	
       sleep 0.25
@@ -86,7 +92,7 @@ _do_log() {
   done
 }
 
-_main() {
+_monipi_main() {
   _dbg_info "in main"
   if _check_prereq ; then
     _start_logging
@@ -94,4 +100,4 @@ _main() {
   fi
 }
 
-_main  
+_monipi_main  
