@@ -24,5 +24,5 @@ Prerequisites:
 8. gnuplot from the Raspbian Buster repositories.
 9. vgencmd utility included with Raspbian Buster.
  
-install.sh can try and gather what might be missing on your Raspberry Pi.
+*** TODO: write install.sh*** can try and gather what might be missing on your Raspberry Pi.
 
