@@ -1,13 +1,18 @@
 #!/bin/bash
 #
 # stress-and-log.sh
-# Version 1.0 (c) c't/Ingo Storm it@ct.de
 #
-# Purpose: log Raspberry Pi temperature and ARM frequency
+# Version 1.0 (c) 2019-11-06
+# (c) c't/Ingo Storm it@ct.de
+#
+# License: GPL V3
+#
+# Purpose: Log Raspberry Pi temperature and ARM frequency
 # while putting it under stress. The resulting logfile can
 # be plotted with the gnuplot script cool.pl.
 #
 # Sequence of actions:
+# - calculate and display entire runtime
 # - start logging with monipi.sh
 # - wait for $_cooldown_time seconds
 # - run openssl speed and iperf3 for $_test_time seconds
@@ -30,182 +35,266 @@
 # - cpuburn-arm53
 # - writable log directory $HOME/monipi
 
-MASTER_LOG="$HOME/monipi/monipi.master.log"  # master log file
-LOG_FILE=""                                  # log file for this test
-IPERF3_SERVER="it-mac-mini.local"
-MONIPI_CMD="$HOME/monipi/monipi.sh"
+readonly _ARG1=$1
 
-# durations of different phases
+readonly _BASE_PATH="$HOME/monipi"                    # everything goes here
+readonly _LOG_PATH="$_BASE_PATH/LOGS"                  # for logfiles
+readonly _GRAPH_PATH="$_BASE_PATH/GRAPHS"             # for gnuplot graphs
+readonly _MASTER_LOG="$_BASE_PATH/monipi.master.log"  # master log file
+readonly _MONIPI_CMD="$_BASE_PATH/monipi.sh"	      # logging script name
+readonly _OPENSSL_CMD="openssl"                       #
+readonly _OPENSS_LIST_CMD="$_OPENSSL_CMD list -cipher-algorithms"
+                                                      # cmd to check for cipher
+readonly _OPENSSL_CIPHER="ChaCha20-Poly1305"          # the cipher we use
+readonly _OPENSSL_PARAMS="speed -evp $_OPENSSL_CIPHER" # test cmd params 
+readonly _IPERF3_CMD="iperf3"
+readonly _IPERF3_SERVER="it-mac-mini.local"           # iperf3 server 
+readonly _IPERF3_PORT="5201"			      # default port for iperf3
+readonly _IPERF3_TEST_CMD="$_IPERF3_CMD -c $_IPERF3_SERVER $_IPERF3_PORT"
+
+readonly _NC_CMD="nc"                                 # netcat
+readonly _NC_TEST_CMD="$_NC_CMD -z $_IPERF3_SERVER $_IPERF3_PORT"
+                                                      # netcat-command to test
+                                                      # for iperf3 server
+readonly _GLMARK2_CMD="glmark2"
+readonly _CPUBURN_CMD="cpuburn-a53"
+
+_run_completed=false                      # have all tests finished?
+_LOG_FILE=""                              # log file for this test
+
+###### durations of different stress test phases
+
+# ultra short set
+_cooldown_time=5                            # time to wait before stress tests
+_test_time=10                                # duration of each stress test
+_pause_time=10                               # pause between stress tests
+_cooldown_multiplier=1                      # multiplier for final cooldown 
 # one set for short tests
-_cooldown_time=20                            # time to wait before stress tests
-_test_time=20                                # duration of each stress test
-_pause_time=30                               # pause between stress tests
-_cooldown_multiplier=3                       # multiplier for final cooldown 
+#_cooldown_time=20                            # time to wait before stress tests
+#_test_time=20                                # duration of each stress test
+#_pause_time=30                               # pause between stress tests
+#_cooldown_multiplier=3                       # multiplier for final cooldown 
 # second set for regular tests, 28 minutes
 #_cooldown_time=60                            # time to wait before stress tests
 #_test_time=180                                # duration of each stress test
 #_pause_time=60                               # pause between stress tests
 #_cooldown_multiplier=3                       # multiplier for final cooldown 
 
-printf "%-12s%10s\n" "Cooldown" "$_cooldown_time"
-printf "%-12s%10s\n" "Pausenlänge" "$_pause_time"
-printf "%-12s%10s\n" "Testlänge" "$_test_time"
-printf "%-12s%10s\n" "End-Cooldown" "$(( $_test_time* $_cooldown_multiplier ))"
 
-if [ -z "$1" ]; then
-        echo ""
-        echo "You must provide a name for the logfile as the first cmdline argument."
-        echo ""
-        echo "Example: log-and-stress.sh Browsertest"
-        echo ""
-        echo "will write the data to $HOME/monipi/monipi.Browsertest.log"
-        echo ""
-        exit
-else
-        if [ ! -d $HOME/monipi ] ; then
-                mkdir $HOME/monipi
-        fi
-	touch "$HOME/monipi/$1"
-	./monipi.sh $1 &
-        logfilename="$HOME/monipi/monipi."$1".log"
-        echo "Data are written to " $logfilename
-        touch $logfilename
-fi
+trap _cleanup SIGHUP SIGINT SIGTERM
 
-# get timestamp, log it and the name of the test 
-MASTER_LOG=$HOME/monipi/monipi.master.log
-timestamp=$(date '+%s')
-echo "$timestamp" "BURN-IN Start" >>$MASTER_LOG
+_is_cmd_there() {
+  builtin type -P "$1" &> /dev/null
+}
 
-# Berechne die einzelnen Wartepunkte
-startZeit=$(date +%s)	# jetzt gehts los
-echo "startZeit " $startZeit
-# Dauer der einzelnen Phasen
-opensslDauer=$testDauer
-opensslSeconds=$(( opensslDauer/6 ))
-glmarkDauer=$testDauer
-cpuBurnDauer=$testDauer
+_err() {
+  echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
+}
 
-####### berechnete Endpunkte der Phasen
-# 1. Cooldwown
-erstePauseEnde=$(( $startZeit + $cooldownDauer ))
-echo "erstePauseEnde " $erstePauseEnde
-# nach openssl chacha + iperf
-zweitePauseEnde=$(( $erstePauseEnde + $opensslDauer + $pausenDauer ))
-echo "zweitePauseEnde " $zweitePauseEnde
-# nach glmark
-drittePauseEnde=$(( $zweitePauseEnde + $glmarkDauer + $pausenDauer ))
-echo "drittePauseEnde " $drittePauseEnde
-# nach cpuburn-a53
-cpuBurnEnde=$(( $drittePauseEnde + $cpuBurnDauer ))
-echo "cpuBurnEnde " $cpuBurnEnde
-glmark2Dauer=$(( $cpuBurnDauer/2 ))
-glmark2Start=$(( $drittePauseEnde + $glmark2Dauer ))
-# nach cpuBurn
-allEnde=$(( $cpuBurnEnde + 2*$pausenDauer ))
-echo "allEnde " $allEnde
-echo "****"
-gesamtLaufZeit=$(( ($allEnde - $startZeit)/60 ))
-echo "Gesamtlaufzeit " $gesamtLaufZeit
+_info() {
+  echo $@
+}
 
+_dbg_info() {
+  [[ ! -z "$DEBUG" ]] && echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@"
+}
 
-echo "**************" 
-echo "Starting stresstest in $cooldownDauer seconds" 
-date 
-echo "**************" 
+_log_to_master() {
+  echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >$_MASTER_LOG
+}
 
-while [ $(date +%s) -lt $erstePauseEnde ]; do  
-	sleep 0.34
-done
+_usage() {
+  _info 
+  _info "usage: stress-and-log.sh logfilename"
+  _info
+  _info "Example: stress-and-log.sh browsertest"
+  _info
+  _info "will write the log to $_LOG_PATH/monipi.rowsertest.log"
+  _info
+}
 
-echo "**************" 
-echo "Starting iperf plus openssl speed" 
-date 
-echo "**************" 
-timestamp=$(date '+%s')
-echo "$timestamp" "BURN-IN iperf plus openssl start" >>$MASTER_LOG
-#iperf3 -t $opensslDauer -c ingos-mac-mini.local
-iperf3 -t $opensslDauer -b 320M -c ingos-mac-mini.local &
-openssl speed -evp chacha20-poly1305 -seconds $opensslSeconds
-#killall iperf3
-timestamp=$(date '+%s')
-echo "$timestamp" "BURN-IN openssl chacha20-poly1305 finished" >>$MASTER_LOG
-timestamp=$(date '+%s')
-echo "$timestamp" "BURN-IN iperf plus openssl finished" >>$MASTER_LOG
+_cleanup() {
+  # clean up when done or interrupted
+  # log time and name of log to master log
+  if [ $_run_completed ]; then
+    _log_to_master "Stress-and-log: Run completed" >>$_MASTER_LOG
+  else
+    _log_to_master "Stress-and-log: Run NOT completed" >>$_MASTER_LOG 
+  fi
+  # stop monipi.sh
+    #!!! TODO stop monipi.sh in a cleaner fashion
+    # kill all children including monipi.
+    [[ -z "$(jobs -p)" ]] || kill $(jobs -p)
+  exit
+}
 
-# Pause, bis insgesamt Pause+2*openSSL+Pause um sind
-while [ $(date +%s) -lt $zweitePauseEnde ]; do  
-	sleep 0.34
-done
+_check_prereq() {
+  local _req_met=1             # temporary result
+  _dbg_info "in check_prereq"
+  #!!! TODO
+  if ! _is_cmd_there $_MONIPI_CMD; then
+    _info "monipi?" $_MONIPI_CMD} "required, but not found, aborting."
+  elif [ ! -w $_LOG_PATH ]; then
+    _dbg_info LOG_PATH failed
+    _err "Cannot write to log path $_LOG_PATH"
+  elif ! _is_cmd_there $_OPENSSL_CMD ; then
+    _dbg_info OPENSSL_CMD failed
+    _err "openssl? $_OPENSSL_CMD required but not found, aborting."
+  elif ! _is_cmd_there $_IPERF3_CMD ; then
+    _dbg_info IPERF_CMD failed
+    _err "iperf $_IPERF3_CMD required but not found, aborting."
+  elif ! _is_cmd_there $_NC_CMD ; then
+    _dbg_info NC_CMD failed
+    _err "nc $_NC_CMD required but not found, aborting."
+  elif ! $_NC_TEST_CMD ; then
+    _dbg_info NC -z IPERF3 server failed
+    _err "iperf3 server $_IPERF3_SERVER on port $_IPERF3_PORT" + \
+      " unreachable, aborting."
+#  elif [ -z $DISPLAY ]; then
+#    _dbg_info No Display
+#    _err "DISPLAY not set. XZZ11 session needed for glmark2, aborting."
+  elif ! _is_cmd_there $_GLMARK2_CMD ; then
+    _dbg_info No Display
+    _err "glmark2 $_GLMARK2_CMD required but not found, aborting."
+  elif ! _is_cmd_there $_CPUBURN_CMD ; then
+    _dbg_info No CPUBURN 
+    _err "cpuburn $_CPUBURN_CMD required but not found, aborting."
+  elif [ -z $_ARG1 ]; then
+    _dbg_info No cmdline arg 
+    _err "No name provided for log file, aborting."
+    _usage
+  else
+    _req_met=0
+  fi
+  if [ ! $_req_met ]; then
+    err "See $_BASE_PATH/README.MD for the full requirements."
+  fi
+  return $_req_met
+}
 
-echo "**************" 
-echo "running glmark2 buffer for $glmarkDauer seconds" 
-date 
-echo "**************" 
-timestamp=$(date '+%s')
-echo "$timestamp" "BURN-IN glmark2 start" >>$MASTER_LOG
+_fork_monipi() {
+  _dbg_info "in _fork_monipi"
+  $_MONIPI_CMD > $_LOG_FILE &
+}
 
-glmark2 -b :duration=$glmarkDauer -b buffer:columns=200:rows=40 -s 1280x960
+_wait() {
+  while [ $(date +%s) -lt $@ ]; do
+        sleep 0.34
+  done
+}
 
-timestamp=$(date '+%s')
-echo "$timestamp" "BURN-IN glmark2 finished" >>$MASTER_LOG
-echo "**************" 
-echo "Done with glmark2 buffer - waiting " 
-date 
-echo "**************" 
+_start_logging() {
+  _dbg_info "in start logging"
+  _log_to_master "Stress-and-log started"
+  echo "Params:$_ARG1€"
+  _LOG_FILE="$_LOG_PATH/monipi.$_ARG1.log"
+  printf "%-25s%-19s\n" "Logfile" $_LOG_FILE
+  printf "%-14s%10s%s\n" "First cooldown" "$_cooldown_time" " seconds."
+  printf "%-14s%10s%s\n" "Each pause" "$_pause_time" " seconds."
+  printf "%-14s%10s%s\n" "Each test" "$_test_time" " seconds."
+  printf "%-14s%10s%s\n" "Final cooldown" \
+     "$(( $_pause_time * $_cooldown_multiplier ))" " seconds."
+  _log_to_master "Stress-and-log started"
+  _fork_monipi
+}
 
-# Pause
-while [ $(date +%s) -lt $drittePauseEnde ]; do  
-	sleep 0.34
-done
+_stop_logging() {
+  _dbg_info "in stop logging"
+  _run_completed=true
+  _cleanup
+}
 
-echo "**************" 
-echo "Starting cpuburn-a53" 
-date 
-echo "**************" 
-timestamp=$(date '+%s')
-echo "$timestamp" "BURN-IN cpuburn-a53 start" >>$MASTER_LOG
-cpuburn-a53 &
+_do_tests() {
+  # globals: _cooldown_time, _test_time, _pause_time
+  local _start_time
+  local _cooldown_end
+  local _openssl_time
+  local _openssl_seconds
+  local _first_pause_end
+  local _glmark2_time
+  local _second_pause_end
+  local _cpuburn_time 
+  local _glmark2_second_time
+  local _all_end
+  local _cpuburn_id
 
-# Pause, bis die Hälfte der Zeit des CPU-Burn um ist
-while [ $(date +%s) -lt $glmark2Start ]; do  
-	sleep 0.34
-done
+  _dbg_info "in do_tests"
+  ### calculate end times of all phases
+  _start_time=$(date +%s)	            # jetzt gehts los
+  _start_date=$(date)
+  _cooldown_end=$(( $_start_time + $_cooldown_time ))
+  _openssl_time=$_test_time                 # 
+  _openssl_seconds=$(($_openssl_time/6 ))   # openssl speed does 6 runs
+  _first_pause_end=$(( $_start_time + $_openssl_time + $_pause_time ))
+  _glmark2_time=$_test_time                 #
+  _second_pause_end=$(( $_first_pause_end \
+                      + $glmark2_time + $_pause_time ))
+  _cpuburn_time=$_test_time                 #
+  _glmark2_second_time=$(( $_cpuburn_time/2 ))
+  _glmark2_second_start=$(( $_second_pause_end + $_glmark2_second_time ))
+  _all_end=$(( $_second_pause_end + $_cpuburn_time + \
+               $_pause_time * $_cooldown_multiplier ))
+  _total_runtime=$(( ($_all_end - $_start_time)/60 ))
+  
+  ### get to work
+  _info "Total runtime: " $_total_runtime " minutes."
+  #!!! TODO: calculate ETA
 
-echo "**************" 
-echo "Starting cpuburn-a53 plus glmark" 
-date 
-echo "**************" 
-timestamp=$(date '+%s')
-echo "$timestamp" "BURN-IN cpuburn-a53 plus glmark start" >>$MASTER_LOG
+  ### wait for $_cooldown_time to run down
+  _info "Cooldown for $_cooldown_time seconds..."
+  _wait $_cooldown_end
 
-# schalte glmark2 dazu
-glmark2 -b :duration=$glmark2Dauer -b buffer:columns=200:rows=40 -s 1280x960
-killall cpuburn-a53
-timestamp=$(date '+%s')
-echo "$timestamp" "BURN-IN cpuburn-a53 plus glmark finished" >>$MASTER_LOG
+  ### run openssl speed and iperf3 simultaneously
+  _info "openssl speed plus iperf3" 
+  # fork iperf3
+  $_IPERF3_TEST_CMD -t $_openssl_time -b 320M &
+  # run openssl speed 
+  $_OPENSSL_CMD $_OPENSSL_PARAMS -seconds $_openssl_seconds
+  ### openssl speed and iperf3 terminate automatically
 
-echo "**************" 
-echo "end of cpuburn-a53 plus glmark" 
-date 
-echo "**************" 
+  ### wait for $_pause_time to run down
+  _info "Pausing for $_pause_time seconds..."
+  _wait $_first_pause_end
+  
+  ### run glmark2 buffer
+  _info "glmark2"
+  glmark2 -b :duration=$_glmark2_time \
+           -b buffer:columns=200:rows=40 -s 1280x960
+  ### glmark2 terminates automatically
+  
+  ### wait for $_pause_time to run down
+  _wait $_second_pause_end
 
-while [ $(date +%s) -lt $allEnde ]; do  
-	sleep 0.34
-done
+  ### run cpuburn-a53 and add glmark2 after _cpuburn_time/2
+  _info "cpuburn-a53 plus glmark2"
+  # fork cpuburn-a53
+  cpuburn-a53 &
+  _cpuburn_id=$!
+  # wait until half of $_cpuburn_time has run down
+  _wait $_glmark2_second_start
+  glmark2 -b :duration=$_glmark2_second_time \
+           -b buffer:columns=200:rows=40 -s 1280x960
+  ### cpuburn-a53 has to be killed
+  kill $_cpuburn_id
+  ### glmark2 terminates automatically
+  
+  ### wait for _end_cooldown_time to run down
+  _info "wait for final cooldown"
+  _wait $_all_end
+  ### finished
 
-timestamp=$(date '+%s')
-echo "$timestamp" "BURN-IN finished" >>$MASTER_LOG
+}
 
-echo "**************" 
-echo "this is the end"
-date 
-echo "**************" 
+_stress_and_log_main() {
+  _dbg_info "in stress_and_log_main"
+  if _check_prereq; then
+    _start_logging
+    _do_tests
+    _stop_logging
+  fi
+  #!!! TODO: plot graph
+  #./cool6.pl monipi/monipi.$_ARG1.log -p > $1.svg
+}  
 
-rm "$HOME/monipi/$1"
+_stress_and_log_main
 
-#./cool6.pl monipi/monipi.$1.log -p > $1.svg
-
-
-
- 
