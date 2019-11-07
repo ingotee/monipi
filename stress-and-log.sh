@@ -65,9 +65,9 @@ _LOG_FILE=""                              # log file for this test
 ###### durations of different stress test phases
 
 # ultra short set
-_cooldown_time=5                            # time to wait before stress tests
-_test_time=10                                # duration of each stress test
-_pause_time=10                               # pause between stress tests
+_cooldown_time=6                            # time to wait before stress tests
+_test_time=12                                # duration of each stress test
+_pause_time=12                               # pause between stress tests
 _cooldown_multiplier=1                      # multiplier for final cooldown 
 # one set for short tests
 #_cooldown_time=20                            # time to wait before stress tests
@@ -104,7 +104,7 @@ _log_to_master() {
 }
 
 _usage() {
-  _info 
+  _info ""
   _info "usage: stress-and-log.sh logfilename"
   _info
   _info "Example: stress-and-log.sh browsertest"
@@ -124,7 +124,7 @@ _cleanup() {
   # stop monipi.sh
     #!!! TODO stop monipi.sh in a cleaner fashion
     # kill all children including monipi.
-    [[ -z "$(jobs -p)" ]] || kill $(jobs -p)
+    [[ -z "$(jobs -p)" ]] || kill $(jobs -p) 
   exit
 }
 
@@ -150,18 +150,17 @@ _check_prereq() {
     _dbg_info NC -z IPERF3 server failed
     _err "iperf3 server $_IPERF3_SERVER on port $_IPERF3_PORT" + \
       " unreachable, aborting."
-#  elif [ -z $DISPLAY ]; then
-#    _dbg_info No Display
-#    _err "DISPLAY not set. XZZ11 session needed for glmark2, aborting."
-  elif ! _is_cmd_there $_GLMARK2_CMD ; then
+  elif [ -z $DISPLAY ]; then
     _dbg_info No Display
+    _err "DISPLAY not set. XZZ11 session needed for glmark2, aborting."
+  elif ! _is_cmd_there $_GLMARK2_CMD ; then
+    _dbg_info glmark2 not found
     _err "glmark2 $_GLMARK2_CMD required but not found, aborting."
   elif ! _is_cmd_there $_CPUBURN_CMD ; then
     _dbg_info No CPUBURN 
     _err "cpuburn $_CPUBURN_CMD required but not found, aborting."
   elif [ -z $_ARG1 ]; then
     _dbg_info No cmdline arg 
-    _err "No name provided for log file, aborting."
     _usage
   else
     _req_met=0
@@ -185,8 +184,6 @@ _wait() {
 
 _start_logging() {
   _dbg_info "in start logging"
-  _log_to_master "Stress-and-log started"
-  echo "Params:$_ARG1€"
   _LOG_FILE="$_LOG_PATH/monipi.$_ARG1.log"
   printf "%-25s%-19s\n" "Logfile" $_LOG_FILE
   printf "%-14s%10s%s\n" "First cooldown" "$_cooldown_time" " seconds."
@@ -194,6 +191,9 @@ _start_logging() {
   printf "%-14s%10s%s\n" "Each test" "$_test_time" " seconds."
   printf "%-14s%10s%s\n" "Final cooldown" \
      "$(( $_pause_time * $_cooldown_multiplier ))" " seconds."
+  _info ""
+  _info "The output of openssl speed, iperf3 and glmark2 is not supressed so that errors can be noticed."
+  _info ""
   _log_to_master "Stress-and-log started"
   _fork_monipi
 }
@@ -275,7 +275,7 @@ _do_tests() {
   glmark2 -b :duration=$_glmark2_second_time \
            -b buffer:columns=200:rows=40 -s 1280x960
   ### cpuburn-a53 has to be killed
-  kill $_cpuburn_id
+  killall cpuburn-a53
   ### glmark2 terminates automatically
   
   ### wait for _end_cooldown_time to run down
