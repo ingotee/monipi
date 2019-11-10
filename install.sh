@@ -93,7 +93,7 @@ _check_glmark2() {
       _info "Cloned successfully."
       _info "Configuring it..."
       cd "$HOME/glmark2"
-      ./waf configure --with-flavors=x11-gl,x11-glesv2 | tee .my_config.log 
+      ./waf configure --with-flavors=x11-glesv2 | tee .my_config.log 
       if tail -1 .my_config.log | grep "successfully" 1>/dev/null ; then
         _info ""
         _info "Configuration successful. Compiling now."

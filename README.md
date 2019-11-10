@@ -21,10 +21,10 @@ Prerequisites:
 3. iperf3 from Raspbian Buster repositories
 4. An iperf3-server on your local network that iperf3 can talk to. Has to be specified in the scirpt.
 5. The regular Raspbian desktop should be installed.
-6. ***TODO: specify glmark2-flavor*** glmark2 compiled with x11-???. You have to pull this from GitHub and compile it yourself if you do not let install.sh do it.
+6. glmark2 compiled with flavor x11-glesv2. You have to pull this from GitHub and compile it yourself if you do not let install.sh do it.
 7. cpuburn-a53 from the project cpuburn-arm. You have to pull this from GitHub and compile it yourself if you do not let install.sh do it.
 8. gnuplot from the Raspbian Buster repositories.
 9. vgencmd utility included with Raspbian Buster.
  
-*** TODO: Write install.sh*** that can try and gather what might be missing on your Raspberry Pi.
+Attention: A beta version of install.sh has been included. It will try to update Raspbian, install a few libraries and packages and then configure, compile and install glmark2 and then compile cpuburn-a53. Please report any problems you encounter.
 

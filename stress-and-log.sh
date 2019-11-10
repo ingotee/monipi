@@ -56,7 +56,7 @@ readonly _NC_CMD="nc"                                 # netcat
 readonly _NC_TEST_CMD="$_NC_CMD -z $_IPERF3_SERVER $_IPERF3_PORT"
                                                       # netcat-command to test
                                                       # for iperf3 server
-readonly _GLMARK2_CMD="glmark2"
+readonly _GLMARK2_CMD="glmark2-es"
 readonly _CPUBURN_CMD="cpuburn-a53"
 
 _run_completed=false                      # have all tests finished?
@@ -258,7 +258,7 @@ _do_tests() {
   
   ### run glmark2 buffer
   _info "glmark2"
-  glmark2 -b :duration=$_glmark2_time \
+  _GLMARK2_CMD -b :duration=$_glmark2_time \
            -b buffer:columns=200:rows=40 -s 1280x960
   ### glmark2 terminates automatically
   
