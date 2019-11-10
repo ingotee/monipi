@@ -1,5 +1,7 @@
 # monipi
 
+***Please let me know if you prefer a German version of the READMEs.*** 
+
 monipi is a collection of two bash scripts and a gnuplot script. Together they enable you to examine the Raspberry Pi's behaviour regarding core temperature and ARM clock frequency with different loads. 
 
 - monipi.sh pulls temperature and ARM frequency from the Raspberry
@@ -16,7 +18,7 @@ Prerequisites:
 
 1. A writable directory $HOME/monipi for the scripts, the logs and the graphs.
 2. openssl compiled with the "speed" benchmark routine and ChaCha20-Poly1305. Both is the case with the stock openssl package in Raspbian Buster.
-3. iperf3 from Raspbian Buster repoistories
+3. iperf3 from Raspbian Buster repositories
 4. An iperf3-server on your local network that iperf3 can talk to. Has to be specified in the scirpt.
 5. The regular Raspbian desktop should be installed.
 6. ***TODO: specify glmark2-flavor*** glmark2 compiled with x11-???. You have to pull this from GitHub and compile it yourself if you do not let install.sh do it.
@@ -24,5 +26,5 @@ Prerequisites:
 8. gnuplot from the Raspbian Buster repositories.
 9. vgencmd utility included with Raspbian Buster.
  
-*** TODO: write install.sh*** can try and gather what might be missing on your Raspberry Pi.
+*** TODO: Write install.sh*** that can try and gather what might be missing on your Raspberry Pi.
 
