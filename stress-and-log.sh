@@ -56,7 +56,7 @@ readonly _NC_CMD="nc"                                 # netcat
 readonly _NC_TEST_CMD="$_NC_CMD -z $_IPERF3_SERVER $_IPERF3_PORT"
                                                       # netcat-command to test
                                                       # for iperf3 server
-readonly _GLMARK2_CMD="glmark2-es"
+readonly _GLMARK2_CMD="glmark2-es2"
 readonly _CPUBURN_CMD="cpuburn-a53"
 
 _run_completed=false                      # have all tests finished?

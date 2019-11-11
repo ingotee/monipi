@@ -100,14 +100,15 @@ _check_glmark2() {
         _info ""
         sleep 10
         ./waf
-        if [ -x "build/src/glmark2" ]; then
+        if [ -x "build/src/glmark2-es2" ]; then
           _info "Compile seems to have been successful. Installing now."
           _info ""
           sleep 2
           sudo ./waf install
           _info ""
-          if _is_cmd_there "glmark2"; then 
-            _info "Installion successful."
+          if _is_cmd_there "glmark2-es2"; then 
+            _info "Installation successful."
+            _info ""
           else
             _err "Installing glmark2 failed. Aborting."
             exit 1
@@ -132,6 +133,7 @@ _check_cpuburn-a53() {
     _info " ok."
   else
     _info " not found. Cloning it from GitHub."
+    _info ""
     cd
     git clone https://github.com/ssvb/cpuburn-arm.git
     if [ $? ]; then
