@@ -2,7 +2,7 @@
 #
 # stress-and-log.sh
 #
-# Version 1.0 (c) 2019-11-06
+# Version 1.1 (c) 2019-11-06
 # (c) c't/Ingo Storm it@ct.de
 #
 # License: GPL V3
@@ -57,7 +57,7 @@ readonly _NC_TEST_CMD="$_NC_CMD -z $_IPERF3_SERVER $_IPERF3_PORT"
                                                       # netcat-command to test
                                                       # for iperf3 server
 readonly _GLMARK2_CMD="glmark2-es2"
-readonly _CPUBURN_CMD="cpuburn-a53"
+readonly _CPUBURN_CMD="$HOME/cpuburn-arm/cpuburn-a53"
 
 _run_completed=false                      # have all tests finished?
 _LOG_FILE=""                              # log file for this test
@@ -65,20 +65,20 @@ _LOG_FILE=""                              # log file for this test
 ###### durations of different stress test phases
 
 # ultra short set
-_cooldown_time=6                            # time to wait before stress tests
-_test_time=12                                # duration of each stress test
-_pause_time=12                               # pause between stress tests
-_cooldown_multiplier=1                      # multiplier for final cooldown 
+#_cooldown_time=10                            # time to wait before stress tests
+#_test_time=30                                # duration of each stress test
+#_pause_time=20                               # pause between stress tests
+#_cooldown_multiplier=2                       # multiplier for final cooldown 
 # one set for short tests
 #_cooldown_time=20                            # time to wait before stress tests
 #_test_time=20                                # duration of each stress test
 #_pause_time=30                               # pause between stress tests
 #_cooldown_multiplier=3                       # multiplier for final cooldown 
-# second set for regular tests, 28 minutes
-#_cooldown_time=60                            # time to wait before stress tests
-#_test_time=180                                # duration of each stress test
-#_pause_time=60                               # pause between stress tests
-#_cooldown_multiplier=3                       # multiplier for final cooldown 
+ second set for regular tests, 28 minutes
+_cooldown_time=60                            # time to wait before stress tests
+_test_time=300                                # duration of each stress test
+_pause_time=180                               # pause between stress tests
+_cooldown_multiplier=2                       # multiplier for final cooldown 
 
 
 trap _cleanup SIGHUP SIGINT SIGTERM
@@ -186,10 +186,10 @@ _start_logging() {
   _dbg_info "in start logging"
   _LOG_FILE="$_LOG_PATH/monipi.$_ARG1.log"
   printf "%-25s%-19s\n" "Logfile" $_LOG_FILE
-  printf "%-14s%10s%s\n" "First cooldown" "$_cooldown_time" " seconds."
-  printf "%-14s%10s%s\n" "Each pause" "$_pause_time" " seconds."
-  printf "%-14s%10s%s\n" "Each test" "$_test_time" " seconds."
-  printf "%-14s%10s%s\n" "Final cooldown" \
+  printf "%-20s%15s%s\n" "First cooldown" "$_cooldown_time" " seconds."
+  printf "%-20s%15s%s\n" "Each pause" "$_pause_time" " seconds."
+  printf "%-20s%15s%s\n" "Each test" "$_test_time" " seconds."
+  printf "%-20s%15s%s\n" "Final cooldown" \
      "$(( $_pause_time * $_cooldown_multiplier ))" " seconds."
   _info ""
   _info "The output of openssl speed, iperf3 and glmark2 is not supressed so that errors can be noticed."
@@ -223,17 +223,29 @@ _do_tests() {
   _start_time=$(date +%s)	            # jetzt gehts los
   _start_date=$(date)
   _cooldown_end=$(( $_start_time + $_cooldown_time ))
+  printf "%-20s%15s%s\n" "End of cooldown" "$_cooldown_end"
   _openssl_time=$_test_time                 # 
+  printf "%-20s%15s%s\n" "openssl runtime" "$_openssl_time"
   _openssl_seconds=$(($_openssl_time/6 ))   # openssl speed does 6 runs
-  _first_pause_end=$(( $_start_time + $_openssl_time + $_pause_time ))
+  printf "%-20s%15s%s\n" "openssl s/run" "$_openssl_seconds"
+  printf "%15s%15s%15s\n" "_start_time" "_openssl_time" "_pause_time"
+  printf "%15s%15s%15s\n" "$_start_time" "$_openssl_time" "$_pause_time"
+  _first_pause_end=$(( $_start_time + $_cooldown_time + $_openssl_time + $_pause_time ))
+  printf "%-20s%15s%s\n" "end 1st pause" "$_first_pause_end"
   _glmark2_time=$_test_time                 #
+  printf "%-20s%15s%s\n" "glmark2 runtime" "$_glmark2_time"
   _second_pause_end=$(( $_first_pause_end \
-                      + $glmark2_time + $_pause_time ))
+                      + $_glmark2_time + $_pause_time ))
+  printf "%-20s%15s%s\n" "end 2nd pause" "$_second_pause_end"
   _cpuburn_time=$_test_time                 #
+  printf "%-20s%15s%s\n" "cpuburn runtime" "$_cpuburn_time"
   _glmark2_second_time=$(( $_cpuburn_time/2 ))
+  printf "%-20s%15s%s\n" "glmark2 2nd runtime" "$_glmark2_second_time"
   _glmark2_second_start=$(( $_second_pause_end + $_glmark2_second_time ))
+  printf "%-20s%15s%s\n" "glmark2 2nd start" "$_glmark2_second_start"
   _all_end=$(( $_second_pause_end + $_cpuburn_time + \
                $_pause_time * $_cooldown_multiplier ))
+  printf "%-20s%15s%s\n" "end final cooldown" "$_all_end"
   _total_runtime=$(( ($_all_end - $_start_time)/60 ))
   
   ### get to work
@@ -258,7 +270,7 @@ _do_tests() {
   
   ### run glmark2 buffer
   _info "glmark2"
-  _GLMARK2_CMD -b :duration=$_glmark2_time \
+  $_GLMARK2_CMD -b :duration=$_glmark2_time \
            -b buffer:columns=200:rows=40 -s 1280x960
   ### glmark2 terminates automatically
   
@@ -268,11 +280,10 @@ _do_tests() {
   ### run cpuburn-a53 and add glmark2 after _cpuburn_time/2
   _info "cpuburn-a53 plus glmark2"
   # fork cpuburn-a53
-  cpuburn-a53 &
-  _cpuburn_id=$!
+  $_CPUBURN_CMD &
   # wait until half of $_cpuburn_time has run down
   _wait $_glmark2_second_start
-  glmark2 -b :duration=$_glmark2_second_time \
+  $_GLMARK2_CMD -b :duration=$_glmark2_second_time \
            -b buffer:columns=200:rows=40 -s 1280x960
   ### cpuburn-a53 has to be killed
   killall cpuburn-a53
@@ -293,7 +304,7 @@ _stress_and_log_main() {
     _stop_logging
   fi
   #!!! TODO: plot graph
-  #./cool6.pl monipi/monipi.$_ARG1.log -p > $1.svg
+  #./howcool.pl $_LOGFILE "Title" > GRAPHS/$1.svg
 }  
 
 _stress_and_log_main
