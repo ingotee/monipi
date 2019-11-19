@@ -74,7 +74,7 @@ _LOG_FILE=""                              # log file for this test
 #_test_time=20                                # duration of each stress test
 #_pause_time=30                               # pause between stress tests
 #_cooldown_multiplier=3                       # multiplier for final cooldown 
- second set for regular tests, 28 minutes
+# second set for regular tests, 28 minutes
 _cooldown_time=60                            # time to wait before stress tests
 _test_time=300                                # duration of each stress test
 _pause_time=180                               # pause between stress tests
