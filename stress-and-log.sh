@@ -228,8 +228,6 @@ _do_tests() {
   printf "%-20s%15s%s\n" "openssl runtime" "$_openssl_time"
   _openssl_seconds=$(($_openssl_time/6 ))   # openssl speed does 6 runs
   printf "%-20s%15s%s\n" "openssl s/run" "$_openssl_seconds"
-  printf "%15s%15s%15s\n" "_start_time" "_openssl_time" "_pause_time"
-  printf "%15s%15s%15s\n" "$_start_time" "$_openssl_time" "$_pause_time"
   _first_pause_end=$(( $_start_time + $_cooldown_time + $_openssl_time + $_pause_time ))
   printf "%-20s%15s%s\n" "end 1st pause" "$_first_pause_end"
   _glmark2_time=$_test_time                 #
