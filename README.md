@@ -2,6 +2,8 @@
 
 ***Please let me know if you prefer a German version of the READMEs.*** 
 
+# How to install
+
 If you want to use monipi.sh and its friens, go to your home directory on your Raspberry Pi and clone this repository:
 
 ```bash
@@ -15,8 +17,7 @@ Then go into the new directory and execute install.sh as root. install.sh update
 cd monipi
 sudo install.sh
 ```
-
-*************************************************************************
+# What is monipi?
 
 monipi is a collection of two bash scripts and a gnuplot script. Together they enable you to examine the Raspberry Pi's behaviour regarding core temperature and ARM clock frequency with different loads. 
 
@@ -30,7 +31,7 @@ Pi's SoC once every second and logs them with a timestamp.
 
 The project came to life when it became obvious that the Raspberry Pi might be a lot faster than its predecessors, but that it also has to throttle the ARM cores a lot because they just get too hot. We wanted to know which kinds of load it can handle without throttling and how much cooling can do about it. 
 
-Prerequisites:
+# Prerequisites
 
 1. A writable directory $HOME/monipi for the scripts, the logs and the graphs.
 2. openssl compiled with the "speed" benchmark routine and ChaCha20-Poly1305. Both is the case with the stock openssl package in Raspbian Buster.
@@ -42,7 +43,7 @@ Prerequisites:
 8. gnuplot from the Raspbian Buster repositories.
 9. vgencmd utility included with Raspbian Buster.
  
-How to use it:
+# How to use monipi:
 
 Go to the monipi directory
 
