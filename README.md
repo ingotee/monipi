@@ -2,6 +2,22 @@
 
 ***Please let me know if you prefer a German version of the READMEs.*** 
 
+If you want to use monipi.sh and its friens, go to your home directory on your Raspberry Pi and clone this repository:
+
+```bash
+cd
+git clone https://github.com/ingotee/monipi.git
+```
+
+Then go into the new directory and execute install.sh as root. install.sh updates Raspbian. It also downloads, compiles and installs glmark2 and cpuburn-arm, because they are needed for the stress tests.
+
+```bash
+cd monipi
+sudo install.sh
+```
+
+*************************************************************************
+
 monipi is a collection of two bash scripts and a gnuplot script. Together they enable you to examine the Raspberry Pi's behaviour regarding core temperature and ARM clock frequency with different loads. 
 
 - monipi.sh pulls temperature and ARM frequency from the Raspberry
@@ -26,5 +42,22 @@ Prerequisites:
 8. gnuplot from the Raspbian Buster repositories.
 9. vgencmd utility included with Raspbian Buster.
  
-Attention: A beta version of install.sh has been included. It will try to update Raspbian, install a few libraries and packages and then configure, compile and install glmark2 and then compile cpuburn-a53. Please report any problems you encounter.
+How to use it:
 
+Go to the monipi directory
+
+```bash
+cd ~/monipi
+```
+
+To stress your Raspberry Pi, start stress-and-log.sh and give it a meaningful name for the logfile which ends up in the subdirectory LOGS.
+
+```bash
+./stress-and-log.sh RPi4B-1500MHz-MyOwnCoolingSolution
+```
+
+A normal run will take 28 minutes to complete. (You can select shorter intervals at the beginning of stress-and-log.sh.) You can plot the temperature and clock frequency afterwords. howcool.pl needs three parameters: The name of the logfile you just created, a title for the graph. You then redirect the output to a file, usually in the subdirectory GRAPHS. The format is svg which all browsers can display quite nicely.
+
+```ḃash
+./howcool.pl LOGS/RPi4B-1500MHz-MyOwnCoolingSolution.log "RPi 4B with my cool cooler" > GRAPHS/RPi4B-1500MHz-MyOwnCoolingSolution.log
+```
