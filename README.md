@@ -4,14 +4,14 @@
 
 # How to install
 
-If you want to use monipi.sh and its friens, go to your home directory on your Raspberry Pi and clone this repository:
+If you want to use monipi.sh and its friends, go to your home directory on your Raspberry Pi and clone this repository:
 
 ```bash
 cd
 git clone https://github.com/ingotee/monipi.git
 ```
 
-Then go into the new directory and execute install.sh as root. install.sh updates Raspbian. It also downloads, compiles and installs glmark2 and cpuburn-arm, because they are needed for the stress tests.
+Then go into the new directory and execute install.sh as root. install.sh updates Raspbian and installs gnuplot, iperf3 and some libraries and header files from the Raspbian Buster repositories. It also downloads, compiles and installs glmark2 and cpuburn-arm from GitHub. They are needed for the stress tests.
 
 ```bash
 cd monipi
@@ -51,7 +51,7 @@ Go to the monipi directory
 cd ~/monipi
 ```
 
-To stress your Raspberry Pi, start stress-and-log.sh and give it a meaningful name for the logfile which ends up in the subdirectory LOGS.
+You also need an iperf3 server in your network. Specify its hostname or ip address in stress-and-log.sh - the default is my computer at work which you will hopefully not be able to reach: it-mac-mini.local. To stress your Raspberry Pi, start stress-and-log.sh and give it a meaningful name for the logfile which ends up in the subdirectory LOGS.
 
 ```bash
 ./stress-and-log.sh RPi4B-1500MHz-MyOwnCoolingSolution
