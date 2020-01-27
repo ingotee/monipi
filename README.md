@@ -11,11 +11,11 @@ cd
 git clone https://github.com/ingotee/monipi.git
 ```
 
-Then go into the new directory and execute install.sh as root. install.sh updates Raspbian and installs gnuplot, iperf3 and some libraries and header files from the Raspbian Buster repositories. It also downloads, compiles and installs glmark2 and cpuburn-arm from GitHub. They are needed for the stress tests.
+Then go into the new directory and execute install.sh. This will update Raspbian and installs gnuplot, iperf3 and some libraries and header files from the Raspbian Buster repositories. It also downloads, compiles and installs glmark2 and cpuburn-arm from GitHub. install.sh uses "sudo" because root privileges are needed e.g. for updating Raspbian. This is the reason why you will be asked for your password.
 
 ```bash
 cd monipi
-sudo install.sh
+install.sh
 ```
 # What is monipi?
 
