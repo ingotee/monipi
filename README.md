@@ -60,5 +60,5 @@ You also need an iperf3 server in your network. Specify its hostname or ip addre
 A normal run will take 28 minutes to complete. (You can select shorter intervals at the beginning of stress-and-log.sh.) You can plot the temperature and clock frequency afterwords. howcool.pl needs three parameters: The name of the logfile you just created, a title for the graph. You then redirect the output to a file, usually in the subdirectory GRAPHS. The format is svg which all browsers can display quite nicely.
 
 ```ḃash
-./howcool.pl LOGS/RPi4B-1500MHz-MyOwnCoolingSolution.log "RPi 4B with my cool cooler" > GRAPHS/RPi4B-1500MHz-MyOwnCoolingSolution.log
+./howcool.pl LOGS/RPi4B-1500MHz-MyOwnCoolingSolution.log "RPi 4B with my cool cooler" > GRAPHS/RPi4B-1500MHz-MyOwnCoolingSolution.svg
 ```
